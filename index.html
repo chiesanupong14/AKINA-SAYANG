@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>MATCH ME, Akina</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* General Styles */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; 
+        }
+        body {
+            background-color: #2e7d32;
+            color: white;
+            margin: 0;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            padding: 0;
+            overflow-x: hidden; 
+        }
+        h1 {
+            margin-bottom: 20px;
+            margin-top: 40px;
+            font-size: 0.90rem;
+            word-wrap: break-word; 
+        }
+        .hidden {
+            display: none !important; 
+        }
+
+        /* Start Screen */
+        .start-screen {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #fff;
+            color: #000;
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 100000; 
+        }
+        .welcome-box {
+            border: 4px solid #000;
+            padding: 30px;
+            border-radius: 10px;
+            background-color: #fff;
+            max-width: 400px;
+            width: 90%; 
+            margin: 0 auto;
+            box-shadow: 4px 4px 0 #000;
+        }
+        .start-screen h1 {
+            color: #ff69b4;
+            margin-bottom: 15px;
+            font-size: 1rem; 
+        }
+        .start-screen p {
+            font-size: 0.6rem;
+            margin-bottom: 20px;
+            color: #000;
+            line-height: 15px;
+        }
+        .start-screen button {
+            padding: 12px 25px; 
+            font-size: 0.8rem;
+            border: 4px solid #000;
+            background-color: #ff69b4;
+            color: #000;
+            cursor: pointer;
+            margin: 8px 0; 
+            width: 100%; 
+            max-width: 250px; 
+            transition: background-color 0.1s ease, transform 0.1s ease;
+        }
+        .start-screen button:active {
+            transform: translateY(2px); 
+        }
+
+        /* Game Container */
+        .container {
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 15px; 
+            min-height: 100vh;
+            justify-content: space-between;
+            z-index: 1; 
+            position: relative; 
+        }
+        .drop-zones {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px; 
+            justify-content: center;
+            margin-top: 2vh;
+            width: 100%; 
+        }
+        .drop-zone {
+            width: 20vw; 
+            max-width: 80px;
+            height: 30vw; 
+            max-height: 120px;
+            border: 2px dashed white;
+            border-radius: 8px;
+            position: relative;
+            flex-shrink: 0; 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease-out, border-color 0.2s ease-out; 
+            cursor: pointer; 
+        }
+        .drop-zone.active { 
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: yellow;
+        }
+        .drop-zone::before {
+            content: attr(data-label);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.5rem; 
+            font-weight: bold;
+            color: #fff;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px; 
+            justify-content: center;
+            margin-top: auto;
+            margin-bottom: 20px;
+            width: 100%; 
+        }
+        .card {
+            width: 20vw; 
+            max-width: 80px;
+            height: 30vw; 
+            max-height: 120px;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            user-select: none;
+            cursor: pointer; 
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3); 
+            border: 2px solid transparent; 
+            transition: border-color 0.1s ease; 
+        }
+
+        .card.selected { 
+            border-color: yellow;
+            box-shadow: 0 0 15px yellow;
+        }
+
+        /* Popups */
+        #popup, #rulesPopup, #finalRewardPopup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200000; 
+            font-family: 'Press Start 2P', cursive;
+            padding: 15px; 
+        }
+        #popup > div, #rulesPopup > div, #finalRewardPopup > div {
+            background-color: #fff;
+            color: #000;
+            border: 4px solid #000;
+            box-shadow: 4px 4px 0 #000;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 95vw; 
+            width: 400px; 
+            text-align: center;
+            font-size: 0.7rem; 
+            max-height: 90vh; 
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+        #popup.hidden, #rulesPopup.hidden, #finalRewardPopup.hidden {
+            display: none !important;
+        }
+        #popup button, #rulesPopup button, #finalRewardPopup button {
+            margin-top: 15px; 
+            padding: 10px 20px;
+            font-size: 0.6rem;
+            border: 2px solid #000;
+            background-color: #ff69b4;
+            color: #000;
+            cursor: pointer;
+            display: block; 
+            width: 100%; 
+            max-width: 200px; 
+            margin-left: auto;
+            margin-right: auto;
+            transition: background-color 0.1s ease, transform 0.1s ease;
+        }
+        #popup button:active, #rulesPopup button:active, #finalRewardPopup button:active {
+            transform: translateY(2px);
+        }
+        #popup-message, #finalRewardMessage {
+            white-space: pre-line;
+            font-size: 0.5rem; 
+            line-height: 1.4;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        #rulesPopup p {
+            margin-bottom: 10px;
+        }
+        #rulesPopup h2 {
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+            color: #ff69b4;
+        }
+        #popup-letter, #finalPopupLetter {
+            max-height: 250px; 
+            overflow-y: auto;
+            text-align: left;
+            padding-right: 10px;
+            box-sizing: border-box;
+            font-size: 0.5rem; 
+            line-height: 1.5;
+            margin-bottom: 20px;
+            background-color: #f9f9f9; 
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #popup-letter::-webkit-scrollbar, #finalPopupLetter::-webkit-scrollbar {
+            width: 6px; 
+        }
+        #popup-letter::-webkit-scrollbar-track, #finalPopupLetter::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        #popup-letter::-webkit-scrollbar-thumb, #finalPopupLetter::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        #popup-letter::-webkit-scrollbar-thumb:hover, #finalPopupLetter::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        #finalPopupInput input {
+            width: 90%; 
+            padding: 8px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #000;
+            border-radius: 5px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.6rem;
+            text-align: center;
+        }
+        .sparkle {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 998;
+        }
+        .decision-buttons {
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            gap: 10px; 
+            margin-top: 20px;
+            position: relative;
+            min-height: 80px; 
+        }
+        .decision-buttons button {
+            display: block; 
+            margin: 0 auto; 
+            width: 80%; 
+            max-width: 180px; 
+        }
+
+        /* Debug console on screen - Removed */
+        /*
+        #debug-console {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 100px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 0.6rem;
+            padding: 5px;
+            overflow-y: auto;
+            text-align: left;
+            z-index: 300000; 
+        }
+        #debug-console div {
+            margin-bottom: 2px;
+            word-wrap: break-word;
+        }
+        */
+
+        /* Responsive adjustments for very small screens */
+        @media (max-width: 320px) {
+            h1 { font-size: 0.7rem; }
+            .start-screen h1 { font-size: 0.9rem; }
+            .start-screen p { font-size: 0.5rem; }
+            .start-screen button { font-size: 0.6rem; padding: 10px 20px; }
+            .drop-zone::before { font-size: 0.4rem; }
+            #popup > div, #rulesPopup > div, #finalRewardPopup > div {
+                padding: 15px;
+                font-size: 0.6rem;
+            }
+            #popup-message, #popup-letter, #finalRewardMessage, #finalPopupLetter {
+                font-size: 0.4rem;
+                line-height: 1.3;
+            }
+            #finalPopupInput input {
+                font-size: 0.5rem;
+                padding: 6px;
+            }
+            .decision-buttons button {
+                font-size: 0.55rem;
+                padding: 8px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="start-screen" id="startScreen">
+        <div class="welcome-box">
+            <h1>🎮 MATCH ME — A Game for Akina ♡</h1>
+            <p>Welcome to MATCH ME!!! <br>a game that could steal your heart.<br><br>Match the cards, claim your rewards, AND IF YOU'RE LUCKY… you might just match with someone unexpected😳.<br></p>
+            <button onclick="startGame()">Start</button>
+            <button onclick="showRules()">Rules</button>
+            <button onclick="window.close()">Quit</button>
+        </div>
+    </div>
+    <div class="container hidden" id="gameContainer"> 
+        <h1>Match, Then Read Me Gently — Akina ♡</h1>
+        <div class="drop-zones">
+            <div class="drop-zone" data-type="queen" data-label="Queen"></div>
+            <div class="drop-zone" data-type="king" data-label="King"></div>
+            <div class="drop-zone" data-type="jack" data-label="Jack"></div>
+            <div class="drop-zone" data-type="ace" data-label="Ace"></div>
+        </div>
+        <div class="cards" id="cardArea"></div>
+    </div>
+
+    <div id="popup" class="hidden">
+        <div>
+            <div id="popup-message"></div>
+            <button onclick="closePopup()">Tutup</button>
+        </div>
+    </div>
+
+    <div id="rulesPopup" class="hidden">
+        <div class="welcome-box">
+            <h2>📜 Rules</h2>
+            <p>🃏 Click a card, then click its matching zone.<br>(Match all the Kings, Queens, Jacks, and Aces together.)</p>
+            <p>💡 Each time you complete a set, you unlock a sweet little surprise from me.</p>
+            <p>✨ Don’t wait for the end — every set you finish is a mini celebration!.</p>
+            <p>🔐 Enjoy the game and try to complete all sets.</p>
+            <p>💌 And hey, don’t cry because my coding skills aren’t perfect.<br>this game is made with ❤️ and lots of awkward debugging!.</p>
+            <button onclick="closeRules()">Tutup</button>
+        </div>
+    </div>
+
+    <div id="finalRewardPopup" class="hidden">
+        <div>
+            <div id="finalRewardMessage"></div>
+            <div id="finalPopupInput" class="hidden">
+                <p>TEBAK JAM BERAPA AKU CHAT AKINA PERTAMA KALI:</p>
+                <input type="text" id="finalCodeInput" placeholder="Contoh: 14:06" />
+                <button onclick="verifyFinalCode()">Kirim</button>
+            </div>
+            <div id="finalPopupLetter" class="hidden">
+                <p>BACA AKU DULUUU SEBELUM CLAIM HADIAH HEHEHEHHEHEHE</p>
+                <p>Akina… makasih ya, udah nyempetin buka halaman ini. I know it probably looks silly at first kayaa... ASTAGAAA, ni bocah ngapain lagi, gitu mungkin pikiran kamu. Tapi jujur, this is me trying my best. You know I’m not exactly good with words, aneh dan maaf panikan juga...</p>
+                <p>Tapi mmmmmm, I just wanna be honest heheh. No gimmicks, no jokes (well, maybe just a little). Just me… finally saying the things I’ve been holding in for a while hmm...</p>
+                <p>Maaf a kalau aku kesannya kayak ngegantung selama ini. Bukan karena aku main-main atau nggak serius, tapi lebih karena aku takut. Kamu juga pasti udah tau i’m not the kind of guy who always knows what to do, or what to say at the right time. Kadang aku terlalu banyak mikir, terlalu takut salah langkah. Takut bikin kamu kecewa. Takut kamu sadar aku bukan orang yang punya semua jawaban. Tapi satu hal yang aku yakin: Aku sayang, kamu.</p>
+                <p>I love the way you carry yourself, how you're thoughtful, but still playful. The way you laugh at the smallest things, the way your eyes light up pas kamu cerita hal yang kamu suka, the way you always try to be kind, even when you’re tired. All of that stays with me. I don’t know when it started, but it slowly became something I carry with me… every. single. day.</p>
+                <p>Kalau sampai detik ini kamu masih baca... aku nggak tahu harus bilang apa selain makasih. Aku nggak tahu gimana kamu ngerasain semua ini. TAPI AKU HARAP AKINA MAUUUU JADI PACARKU HARI INIIII MAAF TIBA TIBA NANYA TAPI AKU MAU JADI PACAR KAMU PLS. TAPI MAU GAAA??????</p>
+
+                <div class="decision-buttons">
+                    <button onclick="handleYes()">MAU!</button>
+                    <button id="noButton">TIDAK MAU 😔</button>
+                </div>
+            </div>
+            <button onclick="closeFinalRewardPopup()" id="finalPopupCloseBtn" class="hidden">Tutup</button>
+        </div>
+    </div>
+
+    <canvas class="sparkle hidden" id="sparkleCanvas"></canvas>
+
+    <script>
+        // const debugConsole = document.getElementById('debug-console'); // Dihapus
+        function logToScreen(message) {
+            // if (debugConsole) { // Dihapus
+            //     const div = document.createElement('div'); // Dihapus
+            //     div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`; // Dihapus
+            //     debugConsole.prepend(div); // Dihapus
+            //     while (debugConsole.children.length > 10) { // Dihapus
+            //         debugConsole.removeChild(debugConsole.lastChild); // Dihapus
+            //     } // Dihapus
+            // } // Dihapus
+            // console.log(message); // Opsional: ini bisa dibiarkan untuk debug di browser console (F12) tapi tidak akan muncul di layar.
+        }
+
+        logToScreen("Script loaded."); 
+
+        let allCardsMatched = false;
+        let noButtonClicks = 0;
+        
+        let selectedCard = null; 
+        
+        const startScreen = document.getElementById('startScreen');
+        const gameContainer = document.getElementById('gameContainer');
+        const cardArea = document.getElementById('cardArea');
+        const noButton = document.getElementById('noButton');
+        const dropZones = document.querySelectorAll('.drop-zone'); 
+
+        // Fungsi yang dipanggil saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            logToScreen("DOMContentLoaded fired.");
+            // Pastikan gameContainer benar-benar tersembunyi di awal
+            if (gameContainer) {
+                gameContainer.classList.add('hidden');
+                logToScreen("gameContainer ensured hidden on load.");
+            }
+            // Pastikan startScreen terlihat di awal
+            if (startScreen) {
+                startScreen.style.display = 'flex'; 
+                logToScreen("startScreen ensured visible on load.");
+            }
+        });
+
+        function startGame() {
+            logToScreen("startGame() called.");
+            if (startScreen) {
+                startScreen.style.display = 'none'; 
+                logToScreen("startScreen hidden.");
+            }
+            if (gameContainer) {
+                gameContainer.style.display = 'flex';
+                gameContainer.classList.remove('hidden'); 
+                logToScreen("gameContainer shown.");
+            }
+        }
+
+        function showRules() {
+            logToScreen("showRules() called.");
+            const rulesPopup = document.getElementById('rulesPopup');
+            if (rulesPopup) {
+                rulesPopup.classList.remove('hidden');
+                logToScreen("rulesPopup shown.");
+            }
+        }
+
+        function closeRules() {
+            logToScreen("closeRules() called.");
+            const rulesPopup = document.getElementById('rulesPopup');
+            if (rulesPopup) {
+                rulesPopup.classList.add('hidden');
+                logToScreen("rulesPopup hidden.");
+            }
+        }
+
+        const cardImageMap = {
+            queen: { hearts: 'QH', spades: 'QS', diamonds: 'QD', clubs: 'QC' },
+            king: { hearts: 'KH', spades: 'KS', diamonds: 'KD', clubs: 'KC' },
+            jack: { hearts: 'JH', spades: 'JS', diamonds: 'JD', clubs: 'JC' },
+            ace: { hearts: 'AH', spades: 'AS', diamonds: 'AD', clubs: 'AC' },
+        };
+
+        const cards = [];
+        const types = ['queen', 'king', 'jack', 'ace'];
+        const suits = ['hearts', 'spades', 'diamonds', 'clubs'];
+        const typeCollection = {
+            queen: new Set(),
+            king: new Set(),
+            jack: new Set(),
+            ace: new Set()
+        };
+
+        types.forEach(type => {
+            suits.forEach(suit => {
+                cards.push({ type, suit });
+            });
+        });
+
+        cards.sort(() => Math.random() - 0.5);
+
+        if (cardArea) {
+            cards.forEach((card, index) => {
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.dataset.type = card.type;
+                el.dataset.suit = card.suit;
+                el.id = 'card-' + index;
+                const code = cardImageMap[card.type][card.suit];
+                el.style.backgroundImage = `url('https://deckofcardsapi.com/static/img/${code}.png')`;
+                
+                el.addEventListener('click', () => {
+                    logToScreen(`Card ${el.id} clicked. Type: ${el.dataset.type}. Parent: ${el.parentElement.id}`);
+                    if (el.parentElement.id === 'cardArea') {
+                        if (selectedCard) {
+                            selectedCard.classList.remove('selected'); 
+                        }
+                        selectedCard = el;
+                        selectedCard.classList.add('selected'); 
+                        logToScreen(`Card ${el.id} selected.`);
+                    } else {
+                        logToScreen(`Card ${el.id} is already in a drop zone. Cannot select.`);
+                    }
+                });
+
+                cardArea.appendChild(el);
+            });
+            logToScreen("Cards initialized and added to cardArea.");
+        } 
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('click', () => {
+                logToScreen(`Drop zone ${zone.dataset.type} clicked.`);
+                if (selectedCard) { 
+                    if (selectedCard.dataset.type === zone.dataset.type) {
+                        logToScreen(`Valid drop for selected card (${selectedCard.dataset.type}) into ${zone.dataset.type} zone.`);
+                        
+                        selectedCard.classList.remove('selected'); 
+                        
+                        if (selectedCard.parentElement) {
+                            selectedCard.parentElement.removeChild(selectedCard);
+                        }
+                        zone.appendChild(selectedCard);
+
+                        selectedCard.style.position = 'absolute';
+                        selectedCard.style.left = '50%';
+                        selectedCard.style.top = ''; 
+                        selectedCard.style.transform = 'translateX(-50%)'; 
+                        
+                        typeCollection[selectedCard.dataset.type].add(selectedCard.dataset.suit);
+                        stackCards(zone); 
+
+                        const messages = {
+                            queen: `👑 QUEEN COMPLETE – KISS 💋\n🌟🎉💐 STOP EVERYTHING!!! 💐🎉🌟\nYOU. JUST. MATCHED. ALL. THE. QUEENS. 👑👑👑👑\n\nAre you a royalty yourself? Or just that majestic?? 😳\nYES YES YOU'RE MAJECTIC!! AKINA CANTIK TIAP HARI AAAAAA GEMES ANAK JURIG KUNTIBOGEL. KARENA AKINA SUDAH MENGUMPULKAN KARTU QUEEN DAN SELALU BIKIN AKU GEMESSS. AKIN MENDAPATKAN REWARD YAITUUUUU.....\n\n💋 REWARD: One kiss. Soft, sweet, and secretly desperate.`,
+                            jack: `🃏 JACK COMPLETE – HUG 🤗\n🚨⚡️BREAKING NEWS!!!⚡️🚨\nSomeone just matched all the JACKS and it’s... YOU???\n\nYOU??? With that smile?? STOPPP SENYUM SENYUM SOALNYA AKU AKAN PINGSAN. KARENA AKINA SUKA SENYUM WALAUPUN SUKA GIGIT DAN SUDAH MENYELESAIKAN KARTU INI JADI AKINA MENDAPATKAN .....\n\n🤗 REWARD: A hug so tight!! AYO PELUKAN!!!.`,
+                            king: `👑 KING COMPLETE – MONEY 💸\n💸💸💸MILLIONAIRE VIBES DETECTED💸💸💸\nAll Kings matched? Pffft. You basically OWN this game now.\n\nYou’re rich. Not with money. With AURAAAAAA. But also money.\n WKWKWKW SIAPA SIH YANG SELALU MINTA DUIT NTUU? AKINA AKINA AKINA. TAPI GAPAPA TAKE ALL MY MONEY AKINAAAAAAA\n\n💳 REWARD: KARTU ATM AKU HEHEHEHHE PIN NYA NANTI AKU KASI YAAAA`,
+                            ace: `🅰️ ACE COMPLETE – HEADPAT 🐾\n🐱💥🛏️RARE DROP: ACE SET COMPLETE🛏️💥🐱\nOkay WAIT—do you even realize how CUTE you are rn???\n\n YES YES YES AKINA LUCUUU TIAP HARIII!! SELAMAT SUDAH MENYELESAIKAN KARTU INIII.\n KARENANA AKINA SELALU BUAT AKU SENYUM JADI AKINA DAPAT REWARD INI YAAAA.\n\n🐾 REWARD: One soft, long, tender headpat... with optional cheek squish.`
+                        };
+
+                        if (typeCollection[selectedCard.dataset.type].size === 4) {
+                            showCardRewardPopup(messages[selectedCard.dataset.type]);
+                        }
+                        selectedCard = null; 
+
+                        const allComplete = types.every(type => typeCollection[type].size === 4);
+                        if (allComplete) {
+                            allCardsMatched = true;
+                            triggerSparkleEffect();
+                        }
+                    } else {
+                        logToScreen(`Mismatched types: Selected card ${selectedCard.dataset.type}, Drop zone ${zone.dataset.type}.`);
+                        zone.classList.add('active'); 
+                        setTimeout(() => zone.classList.remove('active'), 500);
+                    }
+                } else {
+                    logToScreen('No card selected yet.');
+                }
+            });
+        });
+
+        function stackCards(zone) {
+            const cardsInZone = zone.querySelectorAll('.card');
+            cardsInZone.forEach((card, i) => {
+                card.style.position = 'absolute';
+                card.style.left = '50%';
+                card.style.top = `${i * 10}px`; 
+                card.style.transform = 'translateX(-50%)'; 
+                card.style.zIndex = i; 
+            });
+            logToScreen(`Stacked ${cardsInZone.length} cards in ${zone.dataset.type} zone.`);
+        }
+
+        function showCardRewardPopup(message) {
+            document.getElementById('popup-message').textContent = message;
+            document.getElementById('popup').classList.remove('hidden');
+        }
+
+        function closePopup() {
+            document.getElementById('popup').classList.add('hidden');
+            if (allCardsMatched) {
+                setTimeout(() => {
+                    showFinalRewardPopup('🎉 Semua kartu lengkap! Saatnya CLAIM HADIAH!!... 💌');
+                }, 300);
+                allCardsMatched = false;
+            }
+        }
+
+        function showFinalRewardPopup(message) {
+            document.getElementById('finalRewardMessage').textContent = message;
+            document.getElementById('finalRewardPopup').classList.remove('hidden');
+            document.getElementById('finalPopupInput').classList.remove('hidden');
+            document.getElementById('finalPopupLetter').classList.add('hidden');
+            document.getElementById('finalRewardMessage').classList.remove('hidden');
+            document.getElementById('finalPopupCloseBtn').classList.add('hidden');
+        }
+
+        function closeFinalRewardPopup() {
+            document.getElementById('finalRewardPopup').classList.add('hidden');
+            document.getElementById('finalCodeInput').value = '';
+            if (noButton) {
+                noButton.style.position = 'static';
+                noButton.style.transform = 'translate(0, 0)';
+                noButton.style.left = '';
+                noButton.style.top = '';
+            }
+            noButtonClicks = 0;
+        }
+
+        function verifyFinalCode() {
+            const input = document.getElementById('finalCodeInput').value.trim();
+            const correctCode = '16:26'; 
+            const messageElement = document.getElementById('finalRewardMessage');
+
+            if (input === correctCode) {
+                messageElement.classList.add('hidden');
+                document.getElementById('finalPopupInput').classList.add('hidden');
+                document.getElementById('finalPopupLetter').classList.remove('hidden');
+                document.getElementById('finalPopupCloseBtn').classList.remove('hidden');
+            } else {
+                messageElement.textContent = 'WEYYYYYYYY KAMU BUKAN AKINA KAH?????!!!!';
+                messageElement.classList.remove('hidden');
+                document.getElementById('finalPopupLetter').classList.add('hidden');
+                document.getElementById('finalPopupCloseBtn').classList.remove('hidden');
+            }
+        }
+
+        function handleYes() {
+            document.getElementById('finalPopupLetter').innerHTML = `
+                <p>UHUUIII! AKHIRNYAA KITA PACAYAAAAANNN! 🎉</p>
+                <p>MAKASIH SUDAAAAH MAUUUU AKINAAAAA ❤️</p>
+                <p>TOLONG INI DI SCREENSHOOT UNTUK CLAIM SEMUA HADIAHNYA HEHEHEH!</p>
+            `;
+            document.querySelector('.decision-buttons').classList.add('hidden');
+            document.getElementById('finalPopupCloseBtn').classList.remove('hidden');
+            document.getElementById('finalPopupCloseBtn').textContent = 'Tutup Halaman Ini';
+            document.getElementById('finalPopupCloseBtn').onclick = () => { window.close(); };
+        }
+
+        if (noButton) {
+            noButton.addEventListener('click', (e) => { 
+                e.preventDefault(); 
+                moveNoButton();
+            });
+        }
+
+        function moveNoButton() {
+            if (!noButton) return;
+
+            const parent = noButton.parentElement.parentElement; 
+            if (!parent) return;
+
+            const parentRect = parent.getBoundingClientRect();
+            const buttonRect = noButton.getBoundingClientRect();
+
+            let newX, newY;
+            let attempts = 0;
+            const maxAttempts = 50;
+            const minDistance = 100; 
+
+            do {
+                const padding = 20; 
+                const availableWidth = parentRect.width - buttonRect.width - (padding * 2);
+                const availableHeight = parentRect.height - buttonRect.height - (padding * 2);
+
+                newX = padding + Math.random() * availableWidth;
+                newY = padding + Math.random() * availableHeight;
+
+                const yesButton = document.querySelector('.decision-buttons button:first-child');
+                if (yesButton) {
+                    const yesRect = yesButton.getBoundingClientRect();
+                    const yesRelativeX = yesRect.left - parentRect.left;
+                    const yesRelativeY = yesRect.top - parentRect.top;
+
+                    const distanceX = Math.abs((newX + buttonRect.width / 2) - (yesRelativeX + yesRect.width / 2));
+                    const distanceY = Math.abs((newY + buttonRect.height / 2) - (yesRelativeY + yesRect.height / 2));
+
+                    if (distanceX < minDistance && distanceY < minDistance) {
+                        attempts++;
+                        continue;
+                    }
+                }
+                break;
+            } while (attempts < maxAttempts);
+
+            noButton.style.position = 'absolute';
+            noButton.style.left = `${newX}px`;
+            noButton.style.top = `${newY}px`;
+            noButton.style.transform = 'translate(0, 0)';
+            
+            noButtonClicks++;
+        }
+
+        function triggerSparkleEffect() {
+            const canvas = document.getElementById('sparkleCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.classList.remove('hidden');
+            let sparkles = Array.from({ length: 100 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2 + 1,
+                alpha: 1
+            }));
+            const draw = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                sparkles.forEach(s => {
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = `rgba(255,255,255,${s.alpha})`;
+                    ctx.fill();
+                });
+            };
+            const update = () => {
+                sparkles.forEach(s => { s.alpha -= 0.01; });
+                sparkles = sparkles.filter(s => s.alpha > 0);
+            };
+            const animate = () => {
+                draw();
+                update();
+                if (sparkles.length > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    canvas.classList.add('hidden');
+                }
+            };
+            animate();
+        }
+    </script>
+</body>
+</html>
